@@ -320,5 +320,6 @@ graph TD
 
 ---
 
-**Desenvolvido para demonstração de conceitos de WebSocket e arquitetura full-stack** 🚀#   w e b s o c k e t - i n t e r a c t i o n  
+**Desenvolvido para demonstração de conceitos de WebSocket e arquitetura full-stack** 🚀#   w e b s o c k e t - i n t e r a c t i o n 
+ 
  
