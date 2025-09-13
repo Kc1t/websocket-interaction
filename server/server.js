@@ -16,54 +16,144 @@ const io = new Server(server, {
 app.use(cors());
 app.use(express.json());
 
-// Estado global das bolinhas
-let balls = {};
-let nextBallId = 1;
+// Estado global dos jogadores
+let players = {};
+let nextPlayerId = 1;
 
-// Cores disponíveis para as bolinhas
-const colors = [
-  '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', '#FFEAA7',
-  '#DDA0DD', '#98D8C8', '#F7DC6F', '#BB8FCE', '#85C1E9'
+// Estado global dos pontos
+let points = {
+  1: { id: 1, x: 250, y: 420, width: 20, height: 20, collected: false, type: "coin" },
+  2: { id: 2, x: 450, y: 320, width: 20, height: 20, collected: false, type: "gem" },
+  3: { id: 3, x: 650, y: 220, width: 20, height: 20, collected: false, type: "coin" },
+  4: { id: 4, x: 100, y: 500, width: 20, height: 20, collected: false, type: "gem" },
+  5: { id: 5, x: 350, y: 200, width: 20, height: 20, collected: false, type: "coin" },
+};
+
+// NPCs do jogo
+const npcs = [
+  {
+    id: 1,
+    x: 150,
+    y: 510,
+    width: 30,
+    height: 30,
+    name: "Friendly Guard",
+    dialogue: "Welcome to our magical world! I've been guarding this area for years. The platforms above hold many treasures - be careful jumping around!",
+    emoji: "🛡️",
+  },
+  {
+    id: 2,
+    x: 300,
+    y: 410,
+    width: 30,
+    height: 30,
+    name: "Wise Merchant",
+    dialogue: "Ah, a fellow adventurer! I see you're collecting coins and gems. Did you know the purple gems are worth twice as much as the golden coins?",
+    emoji: "🧙‍♂️",
+  },
+  {
+    id: 3,
+    x: 550,
+    y: 210,
+    width: 30,
+    height: 30,
+    name: "Sky Watcher",
+    dialogue: "From up here, I can see the whole world! The view is amazing, but it took me many tries to reach this high platform. Keep practicing your jumps!",
+    emoji: "🔭",
+  },
 ];
 
 io.on('connection', (socket) => {
   console.log(`Cliente conectado: ${socket.id}`);
   
-  // Criar uma nova bolinha para o cliente
-  const ballId = nextBallId++;
-  const color = colors[(ballId - 1) % colors.length];
+  // Criar um novo jogador para o cliente
+  const playerId = nextPlayerId++;
+  const playerName = `Player ${playerId}`;
   
-  balls[ballId] = {
-    id: ballId,
-    x: Math.random() * 252 + 24, // Posição inicial aleatória dentro da canvas 300x300
-    y: Math.random() * 252 + 24, // Considerando raio da bolinha (24px)
-    color: color,
+  players[playerId] = {
+    id: playerId,
+    x: 50,
+    y: 300,
+    width: 30,
+    height: 30,
+    velocityX: 0,
+    velocityY: 0,
+    onGround: false,
+    name: playerName,
     socketId: socket.id
   };
   
-  // Enviar o ID da bolinha para o cliente
-  socket.emit('ballAssigned', { ballId, color });
+  // Enviar o ID do jogador para o cliente
+  socket.emit('playerAssigned', { playerId, name: playerName });
   
-  // Enviar todas as bolinhas existentes para o novo cliente
-  socket.emit('initialBalls', balls);
+  // Enviar todos os jogadores existentes para o novo cliente
+  socket.emit('initialPlayers', players);
   
-  // Notificar outros clientes sobre a nova bolinha
-  socket.broadcast.emit('ballAdded', balls[ballId]);
+  // Enviar pontos e NPCs para o novo cliente
+  socket.emit('initialPoints', points);
+  socket.emit('initialNPCs', npcs);
   
-  // Lidar com movimento de bolinha
-  socket.on('moveBall', (data) => {
-    const { ballId, x, y } = data;
+  // Notificar outros clientes sobre o novo jogador
+  socket.broadcast.emit('playerAdded', players[playerId]);
+  
+  // Lidar com atualização de jogador
+  socket.on('playerUpdate', (data) => {
+    const { playerId, x, y, velocityX, velocityY, onGround } = data;
     
-    if (balls[ballId] && balls[ballId].socketId === socket.id) {
-      // Aceitar qualquer coordenada válida (validação feita no cliente)
-      balls[ballId].x = x;
-      balls[ballId].y = y;
+    if (players[playerId] && players[playerId].socketId === socket.id) {
+      // Atualizar dados do jogador
+      players[playerId].x = x;
+      players[playerId].y = y;
+      players[playerId].velocityX = velocityX;
+      players[playerId].velocityY = velocityY;
+      players[playerId].onGround = onGround;
       
       // Enviar atualização para todos os clientes
-      io.emit('ballMoved', {
-        ballId,
-        x: x,
-        y: y
+      io.emit('playerUpdated', {
+        playerId,
+        x,
+        y,
+        velocityX,
+        velocityY,
+        onGround
+      });
+    }
+  });
+
+  // Lidar com coleta de pontos
+  socket.on('collectPoint', (data) => {
+    const { pointId, playerId } = data;
+    
+    if (points[pointId] && !points[pointId].collected) {
+      points[pointId].collected = true;
+      
+      // Notificar todos os clientes sobre a coleta
+      io.emit('pointCollected', {
+        pointId,
+        playerId
+      });
+    }
+  });
+
+  // Lidar com respawn do jogador
+  socket.on('playerRespawn', (data) => {
+    const { playerId, x, y, velocityX, velocityY, onGround } = data;
+    
+    if (players[playerId] && players[playerId].socketId === socket.id) {
+      players[playerId].x = x;
+      players[playerId].y = y;
+      players[playerId].velocityX = velocityX;
+      players[playerId].velocityY = velocityY;
+      players[playerId].onGround = onGround;
+      
+      // Notificar todos os clientes sobre o respawn
+      io.emit('playerUpdated', {
+        playerId,
+        x,
+        y,
+        velocityX,
+        velocityY,
+        onGround
       });
     }
   });
@@ -72,12 +162,12 @@ io.on('connection', (socket) => {
   socket.on('disconnect', () => {
     console.log(`Cliente desconectado: ${socket.id}`);
     
-    // Encontrar e remover a bolinha do cliente desconectado
-    const ballToRemove = Object.values(balls).find(ball => ball.socketId === socket.id);
-    if (ballToRemove) {
-      delete balls[ballToRemove.id];
+    // Encontrar e remover o jogador desconectado
+    const playerToRemove = Object.values(players).find(player => player.socketId === socket.id);
+    if (playerToRemove) {
+      delete players[playerToRemove.id];
       // Notificar outros clientes sobre a remoção
-      socket.broadcast.emit('ballRemoved', ballToRemove.id);
+      socket.broadcast.emit('playerRemoved', playerToRemove.id);
     }
   });
 });
