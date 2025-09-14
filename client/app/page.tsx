@@ -103,11 +103,12 @@ export default function Home() {
           </button>
         </div>
 
-        {/* Joystick Virtual */}
+        {/* Joystick Virtual - Melhor posicionado para mobile */}
         <VirtualJoystick
           onJoystickMove={handleJoystickMove}
           onJoystickStart={handleJoystickStart}
           onJoystickEnd={handleJoystickEnd}
+          className="absolute bottom-8 right-8 z-20"
         />
 
         {/* Instruções */}
