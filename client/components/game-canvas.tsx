@@ -38,12 +38,15 @@ const GameCanvas = forwardRef<HTMLDivElement, GameCanvasProps>(({
   return (
     <div
       ref={ref}
-      className={`relative bg-white border-4 border-gray-800 cursor-crosshair overflow-visible ${className}`}
+      className={`relative cursor-crosshair overflow-visible w-full h-full ${className}`}
       style={{ 
         width: `${width}px`, 
         height: `${height}px`,
-        position: 'relative',
-        zIndex: 1
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        zIndex: 5,
+        backgroundColor: 'transparent'
       }}
       onClick={onCanvasClick}
     >

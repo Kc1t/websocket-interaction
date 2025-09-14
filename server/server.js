@@ -33,15 +33,13 @@ io.on('connection', (socket) => {
   const ballId = nextBallId++;
   const color = colors[(ballId - 1) % colors.length];
   
-  balls[ballId] = {
-    id: ballId,
-    x: Math.random() * 252 + 24, // Posição inicial aleatória dentro da canvas 300x300
-    y: Math.random() * 252 + 24, // Considerando raio da bolinha (24px)
-    color: color,
-    socketId: socket.id
-  };
-  
-  console.log(`🎯 Criando nova bolinha para ${socket.id}:`, balls[ballId]);
+    balls[ballId] = {
+      id: ballId,
+      x: Math.random() * 800 + 50, // Posição inicial para canvas full-width
+      y: Math.random() * 400 + 50, // Posição inicial para canvas full-height  
+      color: color,
+      socketId: socket.id
+    };  console.log(`🎯 Criando nova bolinha para ${socket.id}:`, balls[ballId]);
   
   // Enviar IMEDIATAMENTE
   console.log(`📤 Enviando ballAssigned IMEDIATAMENTE para ${socket.id}:`, { ballId, color });

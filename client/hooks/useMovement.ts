@@ -28,9 +28,9 @@ export function useMovement({ socket, myBallId, balls }: UseMovementProps) {
     const currentBall = balls.find(ball => ball.id === myBallId)
     if (!currentBall) return
 
-    // Canvas fixa de 300x300
-    const canvasWidth = 300
-    const canvasHeight = 300
+    // Canvas dinâmico - usar window dimensions
+    const canvasWidth = window.innerWidth
+    const canvasHeight = window.innerHeight * 0.8 // 80% para a game area
     const ballRadius = 24 // Raio da bolinha
     
     // Debug: log das dimensões e posições
