@@ -28,9 +28,9 @@ export function useMovement({ socket, myBallId, balls }: UseMovementProps) {
     const currentBall = balls.find(ball => ball.id === myBallId)
     if (!currentBall) return
 
-    // Canvas fixa de 300x300
-    const canvasWidth = 300
-    const canvasHeight = 300
+    // Canvas dinâmico - usar window dimensions
+    const canvasWidth = window.innerWidth
+    const canvasHeight = window.innerHeight * 0.8 // 80% para a game area
     const ballRadius = 24 // Raio da bolinha
     
     // Debug: log das dimensões e posições
@@ -80,15 +80,18 @@ export function useMovement({ socket, myBallId, balls }: UseMovementProps) {
 
   const handleJoystickMove = useCallback((position: { x: number; y: number }) => {
     setJoystickPosition(position)
+    console.log('🕹️ Joystick movement received:', position)
   }, [])
 
   const handleJoystickStart = useCallback(() => {
     setJoystickActive(true)
+    console.log('🕹️ Joystick ativo')
   }, [])
 
   const handleJoystickEnd = useCallback(() => {
     setJoystickActive(false)
     setJoystickPosition({ x: 0, y: 0 })
+    console.log('🕹️ Joystick inativo')
   }, [])
 
   // Event listeners para WASD
@@ -169,10 +172,17 @@ export function useMovement({ socket, myBallId, balls }: UseMovementProps) {
 
       // Movimento por joystick
       if (joystickActive) {
-        // Sensibilidade do joystick (ajustável)
-        const joystickSensitivity = 0.3
-        dx += joystickPosition.x * joystickSensitivity
-        dy += joystickPosition.y * joystickSensitivity
+        // Sensibilidade do joystick ajustada para mobile
+        const joystickSensitivity = 0.2 // Reduzido para movimento mais suave
+        const deadZone = 5 // Zona morta para evitar movimento involuntário
+        
+        const magnitude = Math.sqrt(joystickPosition.x * joystickPosition.x + joystickPosition.y * joystickPosition.y)
+        
+        if (magnitude > deadZone) {
+          dx += joystickPosition.x * joystickSensitivity
+          dy += joystickPosition.y * joystickSensitivity
+          console.log('🕹️ Aplicando movimento joystick:', { dx: joystickPosition.x * joystickSensitivity, dy: joystickPosition.y * joystickSensitivity })
+        }
       }
 
       if (dx !== 0 || dy !== 0) {

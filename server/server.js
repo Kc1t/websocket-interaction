@@ -66,35 +66,62 @@ const npcs = [
 io.on('connection', (socket) => {
   console.log(`Cliente conectado: ${socket.id}`);
   
-  // Criar um novo jogador para o cliente
-  const playerId = nextPlayerId++;
-  const playerName = `Player ${playerId}`;
+  // Criar uma nova bolinha para o cliente IMEDIATAMENTE
+  const ballId = nextBallId++;
+  const color = colors[(ballId - 1) % colors.length];
   
-  players[playerId] = {
-    id: playerId,
-    x: 50,
-    y: 300,
-    width: 30,
-    height: 30,
-    velocityX: 0,
-    velocityY: 0,
-    onGround: false,
-    name: playerName,
-    socketId: socket.id
-  };
+    balls[ballId] = {
+      id: ballId,
+      x: Math.random() * 800 + 50, // Posição inicial para canvas full-width
+      y: Math.random() * 400 + 50, // Posição inicial para canvas full-height  
+      color: color,
+      socketId: socket.id
+    };  console.log(`🎯 Criando nova bolinha para ${socket.id}:`, balls[ballId]);
   
-  // Enviar o ID do jogador para o cliente
-  socket.emit('playerAssigned', { playerId, name: playerName });
+  // Enviar IMEDIATAMENTE
+  console.log(`📤 Enviando ballAssigned IMEDIATAMENTE para ${socket.id}:`, { ballId, color });
+  socket.emit('ballAssigned', { ballId, color });
   
-  // Enviar todos os jogadores existentes para o novo cliente
-  socket.emit('initialPlayers', players);
+  console.log(`📤 Enviando initialBalls IMEDIATAMENTE para ${socket.id}:`, balls);
+  socket.emit('initialBalls', balls);
   
-  // Enviar pontos e NPCs para o novo cliente
-  socket.emit('initialPoints', points);
-  socket.emit('initialNPCs', npcs);
+  // Notificar outros clientes sobre a nova bolinha
+  console.log(`📢 Notificando outros clientes sobre nova bolinha:`, balls[ballId]);
+  socket.broadcast.emit('ballAdded', balls[ballId]);
   
-  // Notificar outros clientes sobre o novo jogador
-  socket.broadcast.emit('playerAdded', players[playerId]);
+  // TAMBÉM enviar com timeout como backup
+  setTimeout(() => {
+    console.log(`🔄 BACKUP: Reenviando dados para ${socket.id} após timeout`);
+    
+    // Enviar o ID da bolinha para o cliente
+    console.log(`📤 Enviando ballAssigned para ${socket.id}:`, { ballId, color });
+    const ballAssignedResult = socket.emit('ballAssigned', { ballId, color });
+    console.log(`📤 Resultado ballAssigned:`, ballAssignedResult);
+    
+    // Enviar todas as bolinhas existentes para o novo cliente
+    console.log(`📤 Enviando initialBalls para ${socket.id}:`, balls);
+    const initialBallsResult = socket.emit('initialBalls', balls);
+    console.log(`📤 Resultado initialBalls:`, initialBallsResult);
+  }, 100); // Aguardar 100ms
+  
+  // Handler para reenviar dados se solicitado
+  socket.on('requestData', () => {
+    console.log(`🔄 Cliente ${socket.id} solicitou reenvio de dados`);
+    const clientBall = Object.values(balls).find(ball => ball.socketId === socket.id);
+    if (clientBall) {
+      console.log(`📤 Reenviando ballAssigned para ${socket.id}:`, { ballId: clientBall.id, color: clientBall.color });
+      socket.emit('ballAssigned', { ballId: clientBall.id, color: clientBall.color });
+      
+      console.log(`📤 Reenviando initialBalls para ${socket.id}:`, balls);
+      socket.emit('initialBalls', balls);
+    }
+  });
+
+  // Teste de ping-pong para verificar comunicação básica
+  socket.on('ping', (data) => {
+    console.log(`🏓 Ping recebido de ${socket.id}:`, data);
+    socket.emit('pong', { message: 'Pong from server!', timestamp: Date.now() });
+  });
   
   // Lidar com atualização de jogador
   socket.on('playerUpdate', (data) => {
