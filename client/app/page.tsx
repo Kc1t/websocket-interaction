@@ -4,8 +4,8 @@ import type React from "react"
 import { useRef } from "react"
 import GameCanvas from "@/components/game-canvas"
 import VirtualJoystick from "@/components/virtual-joystick"
-import { useSocketConnection } from "@/hooks/useSocketConnection"
 import { useMovement } from "@/hooks/useMovement"
+import { useSocketConnection } from "@/hooks/use-socket-connection"
 
 export default function Home() {
   const gameAreaRef = useRef<HTMLDivElement>(null)
@@ -15,6 +15,29 @@ export default function Home() {
     myBallId,
     balls
   })
+
+  // Debug logs para verificar os dados
+  console.log("=== HOME COMPONENT DEBUG ===")
+  console.log("Socket conectado:", !!socket)
+  console.log("Está conectado:", isConnected)
+  console.log("Meu Ball ID:", myBallId)
+  console.log("Total de balls:", balls.length)
+  console.log("Balls data:", balls)
+  console.log("=============================")
+
+  // Função para criar ball de teste
+  const createTestBall = () => {
+    console.log("🧪 Criando ball de teste...")
+    if (socket) {
+      console.log("🏓 Enviando ping de teste...")
+      socket.emit('ping', { message: 'Test from button!', timestamp: Date.now() })
+      
+      console.log("🔄 Solicitando dados...")
+      socket.emit('requestData')
+    } else {
+      console.log("❌ Socket não disponível para teste")
+    }
+  }
 
   const handleGameAreaClick = (event: React.MouseEvent<HTMLDivElement>) => {
     if (!socket || !myBallId || !gameAreaRef.current) return
@@ -65,6 +88,19 @@ export default function Home() {
           isConnected ? 'bg-green-500 text-white' : 'bg-red-500 text-white'
         }`}>
           {isConnected ? 'Conectado' : 'Desconectado'}
+        </div>
+
+        {/* Debug info */}
+        <div className="absolute top-2 right-2 px-2 py-1 bg-blue-500 text-white rounded text-xs">
+          <div>Balls: {balls.length}</div>
+          <div>Meu ID: {myBallId || 'N/A'}</div>
+          <div>Socket: {socket ? 'OK' : 'NULL'}</div>
+          <button 
+            onClick={createTestBall}
+            className="mt-1 px-2 py-1 bg-yellow-500 text-black rounded text-xs"
+          >
+            Teste
+          </button>
         </div>
 
         {/* Joystick Virtual */}
