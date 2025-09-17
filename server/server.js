@@ -16,7 +16,6 @@ app.use(express.json());
 // Estado global dos jogadores
 let players = {};
 let nextPlayerId = 1;
-
 // Estado global dos pontos
 let points = {
   1: { id: 1, x: 250, y: 420, width: 20, height: 20, collected: false, type: "coin" },
