@@ -10,7 +10,6 @@ const io = new Server(server, {
     methods: ["GET", "POST"]
   }
 });
-
 // Middleware
 app.use(cors());
 app.use(express.json());
