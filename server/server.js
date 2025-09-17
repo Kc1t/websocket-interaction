@@ -13,7 +13,6 @@ const io = new Server(server, {
 // Middleware
 app.use(cors());
 app.use(express.json());
-
 // Estado global dos jogadores
 let players = {};
 let nextPlayerId = 1;
