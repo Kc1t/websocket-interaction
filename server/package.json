@@ -1,5 +1,4 @@
-{
-  "name": "websocket-server",
+{ "name": "websocket-server",
   "version": "1.0.0",
   "description": "Servidor Socket.IO para teste de WebSockets",
   "main": "server.js",
